@@ -1,0 +1,18 @@
+{
+  "name": "github-issues-from-csv",
+  "version": "0.1.0",
+  "description": "Add issues to a GitHub repository from a CSV file",
+  "author": "usagizmo",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "add-issues": "node --require dotenv/config ./src/add-issues.js"
+  },
+  "dependencies": {
+    "csv-parser": "^3.0.0",
+    "octokit": "^2.0.14"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.3"
+  }
+}
