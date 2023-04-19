@@ -13,7 +13,7 @@ const readCSV = (filePath) => {
     fs.createReadStream(filePath)
       .pipe(csvParser())
       .on('data', (row) => {
-        issueList.push({ title: row.title, body: row.body });
+        issueList.push({ title: row.title, body: row.body, assignees: row.assignees });
       })
       .on('end', () => {
         resolve(issueList);
@@ -32,6 +32,7 @@ const createIssues = async (issues, octokit, repo) => {
         repo,
         title: issue.title,
         body: issue.body,
+        assignees: issue.assignees.split(',').map((assignee) => assignee.trim()),
       });
       console.log(`Issue created: ${issue.title}`);
     } catch (error) {
