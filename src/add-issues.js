@@ -6,6 +6,12 @@ import { Octokit } from 'octokit';
 const TOKEN = process.env.TOKEN;
 const OWNER = process.env.OWNER;
 
+const c = {
+  red: (str) => `\x1b[31m${str}\x1b[0m`,
+  green: (str) => `\x1b[32m${str}\x1b[0m`,
+  yellow: (str) => `\x1b[33m${str}\x1b[0m`,
+};
+
 const readCSV = (filePath) => {
   return new Promise((resolve, reject) => {
     const issueList = [];
@@ -34,9 +40,9 @@ const createIssues = async (issues, octokit, repo) => {
         body: issue.body,
         assignees: issue.assignees.split(',').map((assignee) => assignee.trim()),
       });
-      console.log(`Issue created: ${issue.title}`);
+      console.log(c.yellow('Issue created: ') + issue.title);
     } catch (error) {
-      console.error(`Error creating issue: ${issue.title} - ${error.message}`);
+      console.error(c.red(`Error creating issue: ${issue.title} - ${error.message}`));
     }
   }
 };
@@ -49,26 +55,26 @@ const askQuestions = async () => {
 
   const question = (query) => {
     return new Promise((resolve) => {
-      rl.question(query, (answer) => {
+      rl.question(c.yellow(query), (answer) => {
         resolve(answer);
       });
     });
   };
 
   const repo = await question('Enter the GitHub repository name: ');
-  const csvSelection = await question('\n0: sample-1.csv\n1: sample-2.csv\nChoose the CSV file: ');
+  const csvSelection = await question('\n1: sample-1.csv\n2: sample-2.csv\nChoose the CSV file: ');
 
   let csvFilePath = '';
 
   switch (csvSelection.toLowerCase()) {
-    case '0':
+    case '1':
       csvFilePath = './src/data/sample-1.csv';
       break;
-    case '1':
+    case '2':
       csvFilePath = './src/data/sample-2.csv';
       break;
     default:
-      console.error('Invalid selection. Please choose 0 or 1.');
+      console.error(c.red('Invalid selection. Please choose.'));
       process.exit(1);
   }
 
@@ -83,5 +89,5 @@ const askQuestions = async () => {
   const octokit = new Octokit({ auth: TOKEN });
 
   await createIssues(issues, octokit, repo);
-  console.log('All issues have been created');
+  console.log(c.green('All issues have been created'));
 })();
