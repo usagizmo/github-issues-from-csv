@@ -2,7 +2,7 @@
 
 This is a Node.js script that allows you to add issues to a GitHub repository from a CSV file. It uses the csv-parser library to read the CSV file and the octokit library to interact with the GitHub API.
 
-https://user-images.githubusercontent.com/1271863/233302783-2fc92811-c9b6-444e-8bcf-ced3cd0cfcf8.mp4
+https://user-images.githubusercontent.com/1271863/233315221-49b682f2-a212-4bf0-b85e-8cd303bff24b.mp4
 
 ## Prerequisites
 
