@@ -12,7 +12,16 @@ const c = {
   yellow: (str) => `\x1b[33m${str}\x1b[0m`,
 };
 
-const readCSV = (filePath) => {
+(async () => {
+  const { repo, csvFilePath } = await askQuestions();
+  const issues = await readCSV(csvFilePath);
+  const octokit = new Octokit({ auth: TOKEN });
+
+  await createIssues(issues, octokit, repo);
+  console.log(c.green('All issues have been created'));
+})();
+
+function readCSV(filePath) {
   return new Promise((resolve, reject) => {
     const issueList = [];
 
@@ -28,9 +37,9 @@ const readCSV = (filePath) => {
         reject(err);
       });
   });
-};
+}
 
-const createIssues = async (issues, octokit, repo) => {
+async function createIssues(issues, octokit, repo) {
   for (const issue of issues) {
     try {
       await octokit.rest.issues.create({
@@ -45,9 +54,9 @@ const createIssues = async (issues, octokit, repo) => {
       console.error(c.red(`Error creating issue: ${issue.title} - ${error.message}`));
     }
   }
-};
+}
 
-const askQuestions = async () => {
+async function askQuestions() {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -81,13 +90,4 @@ const askQuestions = async () => {
   rl.close();
 
   return { repo, csvFilePath };
-};
-
-(async () => {
-  const { repo, csvFilePath } = await askQuestions();
-  const issues = await readCSV(csvFilePath);
-  const octokit = new Octokit({ auth: TOKEN });
-
-  await createIssues(issues, octokit, repo);
-  console.log(c.green('All issues have been created'));
-})();
+}
