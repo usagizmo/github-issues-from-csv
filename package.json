@@ -1,6 +1,6 @@
 {
   "name": "github-issues-from-csv",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Add issues to a GitHub repository from a CSV file",
   "author": "usagizmo",
   "license": "MIT",
