@@ -9,13 +9,13 @@ https://user-images.githubusercontent.com/1271863/233315221-49b682f2-a212-4bf0-b
 Before running the script, you need to have:
 
 - A GitHub account
-- A personal access token with the repo scope
+- A personal access token with the `repo` scope. You can generate a personal access token at https://github.com/settings/personal-access-tokens. Make sure to grant the token `Read and write` permissions for `Issues`.
 - Node.js installed on your machine
 
 ## Installation
 
 1. Clone this repository to your local machine
-2. Navigate to the cloned directory and run npm install to install the dependencies
+2. Navigate to the cloned directory and run `npm install` to install the dependencies
 3. Create a `.env` file from `.env.example` and set the following environment variables:
 
 ```.env
