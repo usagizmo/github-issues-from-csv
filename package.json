@@ -9,10 +9,10 @@
     "add-issues": "node --require dotenv/config ./src/add-issues.js"
   },
   "dependencies": {
-    "csv-parser": "^3.0.0",
-    "octokit": "^3.1.0"
+    "csv-parser": "^3.2.0",
+    "octokit": "^4.1.2"
   },
   "devDependencies": {
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.4.7"
   }
 }
