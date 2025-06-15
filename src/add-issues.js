@@ -1,4 +1,5 @@
 import fs from 'fs';
+import path from 'path';
 import csvParser from 'csv-parser';
 import readline from 'readline';
 import { spawnSync } from 'child_process';
@@ -162,21 +163,46 @@ async function askQuestions() {
   };
 
   const repoString = await question('Enter the GitHub repository (owner/repo): ');
-  const csvSelection = await question('\n1: sample-1.csv\n2: sample-2.csv\nChoose the CSV file: ');
 
-  let csvFilePath = '';
+  // Dynamically scan CSV files from data directory
+  const dataDir = './src/data';
 
-  switch (csvSelection.toLowerCase()) {
-    case '1':
-      csvFilePath = './src/data/sample-1.csv';
-      break;
-    case '2':
-      csvFilePath = './src/data/sample-2.csv';
-      break;
-    default:
-      console.error(c.red('Invalid selection. Please choose.'));
-      process.exit(1);
+  if (!fs.existsSync(dataDir)) {
+    console.error(c.red(`Data directory '${dataDir}' not found.`));
+    process.exit(1);
   }
+
+  const files = fs
+    .readdirSync(dataDir)
+    .filter((file) => file.endsWith('.csv'))
+    .sort();
+
+  if (files.length === 0) {
+    console.error(c.red(`No CSV files found in '${dataDir}' directory.`));
+    process.exit(1);
+  }
+
+  const csvFiles = files.map((filename, index) => ({
+    number: (index + 1).toString(),
+    filename,
+    path: path.join(dataDir, filename),
+  }));
+
+  const fileOptions = csvFiles.map((file) => `${file.number}: ${file.filename}`).join('\n');
+  const csvSelection = await question(
+    `\n${fileOptions}\nChoose the CSV file (1-${csvFiles.length}): `
+  );
+
+  const selectedFile = csvFiles.find((file) => file.number === csvSelection.trim());
+
+  if (!selectedFile) {
+    console.error(
+      c.red(`Invalid selection '${csvSelection}'. Please choose 1-${csvFiles.length}.`)
+    );
+    process.exit(1);
+  }
+
+  const csvFilePath = selectedFile.path;
 
   rl.close();
 
