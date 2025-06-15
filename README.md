@@ -23,7 +23,7 @@ Before running the script, you need to have:
 To use the script:
 
 1. Run `pnpm run add-issues` from the command line
-2. Enter the name of the repository you want to add issues to
+2. Enter the repository in the format `owner/repo` (e.g., `usagizmo/github-issues-from-csv`)
 3. Choose the CSV file you want to use (either `sample-1.csv` or `sample-2.csv`)
 4. The script will create issues in the repository based on the data in the CSV file
 
