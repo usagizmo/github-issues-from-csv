@@ -1,13 +1,12 @@
 import fs from 'fs';
 import csvParser from 'csv-parser';
 import readline from 'readline';
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 
 // Check if GitHub CLI is installed
 function checkGitHubCLI() {
-  try {
-    execSync('gh --version', { stdio: 'pipe' });
-  } catch (error) {
+  const result = spawnSync('gh', ['--version'], { stdio: 'pipe' });
+  if (result.status !== 0) {
     console.error(c.red('GitHub CLI (gh) is not installed. Please install it first.'));
     console.error(c.yellow('Visit: https://cli.github.com/'));
     process.exit(1);
@@ -16,31 +15,27 @@ function checkGitHubCLI() {
 
 // Check if GitHub CLI is authenticated
 function checkGitHubAuth() {
-  try {
-    execSync('gh auth status', { stdio: 'pipe' });
-  } catch (error) {
+  const result = spawnSync('gh', ['auth', 'status'], { stdio: 'pipe' });
+  if (result.status !== 0) {
     console.error(c.red('GitHub CLI authentication failed. Please run "gh auth login" first.'));
     process.exit(1);
   }
 }
 
-// Get owner information
-function getOwner() {
-  try {
-    const userInfo = JSON.parse(execSync('gh api user', { encoding: 'utf8' }));
-    return userInfo.login;
-  } catch (error) {
-    console.error(c.red('Failed to get user information from GitHub.'));
-    process.exit(1);
+// Parse repository string in format owner/repo
+function parseRepository(repoString) {
+  const match = repoString.match(/^([^/]+)\/([^/]+)$/);
+  if (!match) {
+    throw new Error('Repository must be in format "owner/repo"');
   }
+  return { owner: match[1], repo: match[2] };
 }
 
 // Check if repository exists
-function checkRepository(owner, repo) {
-  try {
-    execSync(`gh repo view ${owner}/${repo}`, { stdio: 'pipe' });
-  } catch (error) {
-    console.error(c.red(`Repository ${owner}/${repo} not found or not accessible.`));
+function checkRepository(repoString) {
+  const result = spawnSync('gh', ['repo', 'view', repoString], { stdio: 'pipe' });
+  if (result.status !== 0) {
+    console.error(c.red(`Repository ${repoString} not found or not accessible.`));
     process.exit(1);
   }
 }
@@ -57,11 +52,11 @@ const c = {
     checkGitHubCLI();
     checkGitHubAuth();
 
-    const owner = getOwner();
-    const { repo, csvFilePath } = await askQuestions();
+    const { repoString, csvFilePath } = await askQuestions();
+    const { owner, repo } = parseRepository(repoString);
 
     // Check if repository exists
-    checkRepository(owner, repo);
+    checkRepository(repoString);
 
     const issues = await readCSV(csvFilePath);
     console.log(c.green(`Found ${issues.length} issues to create`));
@@ -115,11 +110,18 @@ function readCSV(filePath) {
 async function createIssues(issues, repo, owner) {
   for (const issue of issues) {
     try {
-      // Create issue using gh api command
-      const fields = [`--field`, `title=${issue.title}`];
+      // Create issue using gh api command with spawnSync to avoid shell escaping issues
+      const args = [
+        'api',
+        `repos/${owner}/${repo}/issues`,
+        '--method',
+        'POST',
+        '--field',
+        `title=${issue.title}`,
+      ];
 
       if (issue.body && issue.body.trim()) {
-        fields.push(`--field`, `body=${issue.body}`);
+        args.push('--field', `body=${issue.body}`);
       }
 
       if (issue.assignees && issue.assignees.trim()) {
@@ -127,13 +129,17 @@ async function createIssues(issues, repo, owner) {
           .split(',')
           .map((a) => a.trim())
           .filter((a) => a);
-        if (assigneeList.length > 0) {
-          fields.push(`--field`, `assignees=${JSON.stringify(assigneeList)}`);
-        }
+        assigneeList.forEach((assignee) => {
+          args.push('--field', `assignees[]=${assignee}`);
+        });
       }
 
-      const cmd = ['gh', 'api', `repos/${owner}/${repo}/issues`, '--method', 'POST', ...fields];
-      execSync(cmd.join(' '), { stdio: 'pipe' });
+      const result = spawnSync('gh', args, { stdio: 'pipe' });
+
+      if (result.status !== 0) {
+        throw new Error(`gh command failed: ${result.stderr.toString()}`);
+      }
+
       console.log(c.yellow('Issue created: ') + issue.title);
     } catch (error) {
       console.error(c.red(`Error creating issue: ${issue.title} - ${error.message}`));
@@ -155,7 +161,7 @@ async function askQuestions() {
     });
   };
 
-  const repo = await question('Enter the GitHub repository name: ');
+  const repoString = await question('Enter the GitHub repository (owner/repo): ');
   const csvSelection = await question('\n1: sample-1.csv\n2: sample-2.csv\nChoose the CSV file: ');
 
   let csvFilePath = '';
@@ -174,5 +180,5 @@ async function askQuestions() {
 
   rl.close();
 
-  return { repo, csvFilePath };
+  return { repoString, csvFilePath };
 }
